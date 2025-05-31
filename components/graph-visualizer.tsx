@@ -41,8 +41,14 @@ export function GraphVisualizer({ graph, path, isWeighted }: GraphVisualizerProp
       }
     }
 
-    setNodePositions(newPositions)
-  }, [graph, dimensions])
+    // Only update if positions actually changed
+    if (
+      newPositions.size !== nodePositions.size ||
+      Array.from(newPositions.keys()).some((key) => !nodePositions.has(key))
+    ) {
+      setNodePositions(newPositions)
+    }
+  }, [graph, dimensions.width, dimensions.height])
 
   // Handle window resize
   useEffect(() => {
@@ -137,10 +143,11 @@ export function GraphVisualizer({ graph, path, isWeighted }: GraphVisualizerProp
       if (!pos) return
 
       const isPathNode = path.includes(node.id)
+      const nodeRadius = 15 // Reduced from 20
 
       // Draw node circle
       ctx.beginPath()
-      ctx.arc(pos.x, pos.y, 20, 0, Math.PI * 2)
+      ctx.arc(pos.x, pos.y, nodeRadius, 0, Math.PI * 2)
 
       if (isPathNode) {
         ctx.fillStyle = "#0ea5e9" // Highlight path nodes
@@ -153,12 +160,28 @@ export function GraphVisualizer({ graph, path, isWeighted }: GraphVisualizerProp
       ctx.fill()
       ctx.stroke()
 
-      // Draw node label
-      ctx.fillStyle = isPathNode ? "white" : "#334155"
-      ctx.font = "12px sans-serif"
+      // Draw a small dot in the center of the node
+      ctx.beginPath()
+      ctx.arc(pos.x, pos.y, 3, 0, Math.PI * 2)
+      ctx.fillStyle = isPathNode ? "white" : "#64748b"
+      ctx.fill()
+
+      // Draw node label above the circle
+      ctx.fillStyle = "#334155"
+      ctx.font = "11px sans-serif"
       ctx.textAlign = "center"
-      ctx.textBaseline = "middle"
-      ctx.fillText(node.id, pos.x, pos.y)
+      ctx.textBaseline = "bottom"
+
+      // Add background for text readability
+      const textMetrics = ctx.measureText(node.id)
+      const textWidth = textMetrics.width
+      const textHeight = 12
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
+      ctx.fillRect(pos.x - textWidth / 2 - 2, pos.y - nodeRadius - textHeight - 2, textWidth + 4, textHeight + 2)
+
+      ctx.fillStyle = "#334155"
+      ctx.fillText(node.id, pos.x, pos.y - nodeRadius - 2)
     })
   }, [graph, nodePositions, path, dimensions, isWeighted])
 
@@ -177,7 +200,8 @@ export function GraphVisualizer({ graph, path, isWeighted }: GraphVisualizerProp
       const dy = pos.y - y
       const distance = Math.sqrt(dx * dx + dy * dy)
 
-      if (distance <= 20) {
+      if (distance <= 15) {
+        // Changed from 20 to 15
         setIsDragging(nodeId)
         break
       }

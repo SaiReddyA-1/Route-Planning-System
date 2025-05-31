@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch"
 import { GraphVisualizer } from "./graph-visualizer"
 import { Graph } from "@/lib/graph"
+import { useWindowSize } from "@/hooks/use-window-size"
 
 export default function RoutePlanner() {
   const [graph, setGraph] = useState<Graph>(new Graph())
@@ -24,6 +27,163 @@ export default function RoutePlanner() {
   const [isWeighted, setIsWeighted] = useState<boolean>(true)
   const [algorithm, setAlgorithm] = useState<"dijkstra" | "bfs">("dijkstra")
   const [error, setError] = useState<string | null>(null)
+  const [useDefaultCities, setUseDefaultCities] = useState<boolean>(true)
+  const [nodePositions, setNodePositions] = useState<Map<string, { x: number; y: number }>>(new Map())
+  const dimensions = useWindowSize()
+
+  const defaultCities = [
+    // Telangana cities (northern region)
+    {
+      name: "Hyderabad",
+      state: "TS",
+      x: 0.5,
+      y: 0.4,
+      connections: [
+        { to: "Warangal", distance: 150 },
+        { to: "Nizamabad", distance: 175 },
+        { to: "Vijayawada", distance: 275 },
+      ],
+    },
+    {
+      name: "Warangal",
+      state: "TS",
+      x: 0.7,
+      y: 0.3,
+      connections: [
+        { to: "Hyderabad", distance: 150 },
+        { to: "Khammam", distance: 120 },
+        { to: "Karimnagar", distance: 85 },
+      ],
+    },
+    {
+      name: "Nizamabad",
+      state: "TS",
+      x: 0.3,
+      y: 0.2,
+      connections: [
+        { to: "Hyderabad", distance: 175 },
+        { to: "Karimnagar", distance: 100 },
+      ],
+    },
+    {
+      name: "Karimnagar",
+      state: "TS",
+      x: 0.4,
+      y: 0.25,
+      connections: [
+        { to: "Warangal", distance: 85 },
+        { to: "Nizamabad", distance: 100 },
+      ],
+    },
+    {
+      name: "Khammam",
+      state: "TS",
+      x: 0.8,
+      y: 0.4,
+      connections: [{ to: "Warangal", distance: 120 }],
+    },
+
+    // Andhra Pradesh cities (southern region)
+    {
+      name: "Vijayawada",
+      state: "AP",
+      x: 0.6,
+      y: 0.6,
+      connections: [
+        { to: "Guntur", distance: 35 },
+        { to: "Visakhapatnam", distance: 350 },
+        { to: "Hyderabad", distance: 275 },
+      ],
+    },
+    {
+      name: "Visakhapatnam",
+      state: "AP",
+      x: 0.9,
+      y: 0.5,
+      connections: [
+        { to: "Vijayawada", distance: 350 },
+        { to: "Kakinada", distance: 65 },
+        { to: "Rajahmundry", distance: 120 },
+      ],
+    },
+    {
+      name: "Guntur",
+      state: "AP",
+      x: 0.5,
+      y: 0.7,
+      connections: [
+        { to: "Vijayawada", distance: 35 },
+        { to: "Ongole", distance: 80 },
+        { to: "Nellore", distance: 180 },
+      ],
+    },
+    {
+      name: "Tirupati",
+      state: "AP",
+      x: 0.3,
+      y: 0.9,
+      connections: [
+        { to: "Chittoor", distance: 70 },
+        { to: "Nellore", distance: 150 },
+        { to: "Kadapa", distance: 120 },
+      ],
+    },
+    {
+      name: "Nellore",
+      state: "AP",
+      x: 0.4,
+      y: 0.8,
+      connections: [
+        { to: "Tirupati", distance: 150 },
+        { to: "Guntur", distance: 180 },
+        { to: "Ongole", distance: 100 },
+      ],
+    },
+    {
+      name: "Kakinada",
+      state: "AP",
+      x: 0.85,
+      y: 0.6,
+      connections: [
+        { to: "Visakhapatnam", distance: 65 },
+        { to: "Rajahmundry", distance: 55 },
+      ],
+    },
+    {
+      name: "Rajahmundry",
+      state: "AP",
+      x: 0.75,
+      y: 0.65,
+      connections: [
+        { to: "Kakinada", distance: 55 },
+        { to: "Visakhapatnam", distance: 120 },
+      ],
+    },
+    {
+      name: "Chittoor",
+      state: "AP",
+      x: 0.25,
+      y: 0.85,
+      connections: [{ to: "Tirupati", distance: 70 }],
+    },
+    {
+      name: "Kadapa",
+      state: "AP",
+      x: 0.35,
+      y: 0.75,
+      connections: [{ to: "Tirupati", distance: 120 }],
+    },
+    {
+      name: "Ongole",
+      state: "AP",
+      x: 0.45,
+      y: 0.75,
+      connections: [
+        { to: "Guntur", distance: 80 },
+        { to: "Nellore", distance: 100 },
+      ],
+    },
+  ]
 
   // Add a city to the graph
   const addCity = () => {
@@ -66,6 +226,11 @@ export default function RoutePlanner() {
     const newGraph = new Graph(graph)
     newGraph.addEdge(sourceCityConnect, targetCityConnect, weight)
     setGraph(newGraph)
+
+    // Reset form fields
+    setSourceCityConnect("")
+    setTargetCityConnect("")
+    setDistance(1)
     setError(null)
   }
 
@@ -115,6 +280,14 @@ export default function RoutePlanner() {
     if (targetCityConnect === city) setTargetCityConnect("")
   }
 
+  // Handle Enter key press for adding cities
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      addCity()
+    }
+  }
+
   // Handle algorithm change based on weighted/unweighted selection
   useEffect(() => {
     if (isWeighted) {
@@ -123,6 +296,116 @@ export default function RoutePlanner() {
       setAlgorithm("bfs")
     }
   }, [isWeighted])
+
+  const loadDefaultCities = () => {
+    const newGraph = new Graph()
+    const newPositions = new Map<string, { x: number; y: number }>()
+
+    // Add all cities first with their positions
+    defaultCities.forEach((city) => {
+      newGraph.addNode(city.name)
+      // Convert relative coordinates to canvas coordinates
+      const x = city.x * (dimensions.width || 800)
+      const y = city.y * (dimensions.height || 600)
+      newPositions.set(city.name, { x, y })
+    })
+
+    // Add connections
+    defaultCities.forEach((city) => {
+      city.connections.forEach((connection) => {
+        if (newGraph.hasNode(connection.to)) {
+          newGraph.addEdge(city.name, connection.to, connection.distance)
+        }
+      })
+    })
+
+    setGraph(newGraph)
+    setNodePositions(newPositions)
+
+    // Save to localStorage
+    saveGraphState(newGraph, newPositions)
+    setError(null)
+  }
+
+  // Save graph state to localStorage
+  const saveGraphState = (graphToSave: Graph, positions: Map<string, { x: number; y: number }>) => {
+    try {
+      const graphData = {
+        nodes: graphToSave.getNodes(),
+        edges: graphToSave.getEdges(),
+        positions: Array.from(positions.entries()),
+        timestamp: Date.now(),
+      }
+      localStorage.setItem("routePlannerGraph", JSON.stringify(graphData))
+    } catch (error) {
+      console.error("Failed to save graph state:", error)
+    }
+  }
+
+  // Load graph state from localStorage
+  const loadGraphState = () => {
+    try {
+      const savedData = localStorage.getItem("routePlannerGraph")
+      if (savedData) {
+        const graphData = JSON.parse(savedData)
+        const newGraph = new Graph()
+
+        // Add nodes
+        graphData.nodes.forEach((node: { id: string }) => {
+          newGraph.addNode(node.id)
+        })
+
+        // Add edges
+        graphData.edges.forEach((edge: { source: string; target: string; weight: number }) => {
+          newGraph.addEdge(edge.source, edge.target, edge.weight)
+        })
+
+        // Restore positions
+        const positions = new Map(graphData.positions)
+
+        setGraph(newGraph)
+        setNodePositions(positions)
+        return true
+      }
+    } catch (error) {
+      console.error("Failed to load graph state:", error)
+    }
+    return false
+  }
+
+  // Clear saved graph state
+  const clearGraphState = () => {
+    try {
+      localStorage.removeItem("routePlannerGraph")
+      const newGraph = new Graph()
+      setGraph(newGraph)
+      setNodePositions(new Map())
+      setError(null)
+    } catch (error) {
+      console.error("Failed to clear graph state:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (useDefaultCities) {
+      // Try to load from localStorage first
+      const loaded = loadGraphState()
+      if (!loaded) {
+        // If no saved state, load default cities
+        loadDefaultCities()
+      }
+    } else {
+      // Clear the graph when default cities are disabled
+      clearGraphState()
+    }
+  }, [useDefaultCities, dimensions])
+
+  // Save state whenever graph or positions change
+  useEffect(() => {
+    if (graph.getNodes().length > 0 && nodePositions.size > 0) {
+      saveGraphState(graph, nodePositions)
+    }
+  }, [graph, nodePositions])
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -133,7 +416,7 @@ export default function RoutePlanner() {
             <CardDescription>Visual representation of cities and roads</CardDescription>
           </CardHeader>
           <CardContent className="h-[500px] relative border rounded-md">
-            <GraphVisualizer graph={graph} path={path} isWeighted={isWeighted} />
+            <GraphVisualizer graph={graph} path={path} isWeighted={isWeighted} nodePositions={nodePositions} />
           </CardContent>
         </Card>
 
@@ -192,6 +475,7 @@ export default function RoutePlanner() {
                         id="cityName"
                         value={cityName}
                         onChange={(e) => setCityName(e.target.value)}
+                        onKeyPress={handleKeyPress}
                         placeholder="Enter city name"
                       />
                       <Button onClick={addCity}>Add</Button>
@@ -211,6 +495,37 @@ export default function RoutePlanner() {
                         ? "Using Dijkstra's algorithm for weighted graphs"
                         : "Using BFS algorithm for unweighted graphs"}
                     </p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="useDefaultCities">Default Cities</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {useDefaultCities ? "Enabled" : "Disabled"}
+                        </span>
+                        <Switch
+                          id="useDefaultCities"
+                          checked={useDefaultCities}
+                          onCheckedChange={setUseDefaultCities}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {useDefaultCities
+                        ? "Using predefined cities from Andhra Pradesh & Telangana"
+                        : "Manually add cities and connections"}
+                    </p>
+                    {useDefaultCities && (
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={loadDefaultCities} className="flex-1">
+                          Reload Default Cities
+                        </Button>
+                        <Button variant="outline" onClick={clearGraphState} className="flex-1">
+                          Clear All
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid gap-2">
@@ -250,9 +565,10 @@ export default function RoutePlanner() {
                       <Input
                         id="distance"
                         type="number"
-                        min="1"
+                        min="0"
                         value={distance}
-                        onChange={(e) => setDistance(Number(e.target.value) || 1)}
+                        onChange={(e) => setDistance(e.target.value === "" ? 0 : Number(e.target.value))}
+                        placeholder="Enter distance"
                       />
                     </div>
                   )}

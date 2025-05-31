@@ -71,9 +71,16 @@ export class Graph {
       this.addNode(target)
     }
 
-    // Add bidirectional edges (undirected graph)
-    this.adjacencyList.get(source)!.set(target, weight)
-    this.adjacencyList.get(target)!.set(source, weight)
+    // Get current weight if edge exists, otherwise use new weight
+    const sourceEdges = this.adjacencyList.get(source)!
+    const targetEdges = this.adjacencyList.get(target)!
+
+    // For multiple edges, keep the minimum weight (shortest distance)
+    const currentWeight = sourceEdges.get(target)
+    if (currentWeight === undefined || weight < currentWeight) {
+      sourceEdges.set(target, weight)
+      targetEdges.set(source, weight)
+    }
   }
 
   // Remove an edge between two nodes

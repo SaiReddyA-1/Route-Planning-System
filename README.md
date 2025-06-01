@@ -7,7 +7,7 @@ A sophisticated web application for visualizing and analyzing graph-based route 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?style=for-the-badge&logo=tailwind-css)
 
-![image](https://github.com/user-attachments/assets/15bee1a2-ae72-4b27-a02a-18996ea4bd9a)
+![image](https://github.com/user-attachments/assets/48949c0c-d2c1-469f-bf5e-0b8565b7158d)
 
 ## ✨ Features
 

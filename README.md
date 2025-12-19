@@ -303,7 +303,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **shadcn/ui** for the beautiful UI components
+- **shadcn/ui** for a beautiful UI components
 - **Lucide** for the comprehensive icon set
 - **Next.js** team for the excellent framework
 - **Tailwind CSS** for the utility-first styling approach
